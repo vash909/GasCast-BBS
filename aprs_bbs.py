@@ -181,6 +181,18 @@ class APRSBBS:
         # Set up logging
         self.logger = logging.getLogger(__name__)
 
+        # ------------------------------------------------------------------
+        # Acknowledgement tracking
+        # ------------------------------------------------------------------
+        # next_seq holds the next outgoing sequence number per recipient.  Sequence
+        # numbers are two digits (00-99) and wrap around.  Using a dict keyed
+        # by callsign lets us maintain separate counters for each station.
+        self.next_seq: Dict[str, int] = {}
+        # pending_acks maps (callsign, seq_str) -> original message text for
+        # messages awaiting acknowledgement.  When an ack is received, the
+        # entry is removed.
+        self.pending_acks: Dict[Tuple[str, str], str] = {}
+
     def connect(self) -> None:
         """Connect to the APRS‑IS server and start the receive thread.
 
@@ -287,14 +299,73 @@ class APRSBBS:
             if not remainder.startswith(':'):
                 return
             message_text = remainder[1:]
-            # Remove optional sequence number (e.g. {123)
+            full_message_text = message_text
+            seq_num: str | None = None
+            # Remove optional sequence number appended with '{'.  Capture it if present
             if '{' in message_text:
-                message_text = message_text.split('{', 1)[0]
+                body, seq_part = message_text.split('{', 1)
+                # seq_part may include digits and possibly more; take leading digits up to 5
+                digits = ''
+                for ch in seq_part:
+                    if ch.isdigit():
+                        digits += ch
+                        if len(digits) >= 5:
+                            break
+                    else:
+                        break
+                if digits:
+                    seq_num = digits
+                message_text = body
             # Only handle messages addressed to us
             if dest_field != self.callsign:
+                # Check for ack/rej directed to us for pending outgoing messages
+                # Only process ack/rej messages where dest_field is our callsign
+                return
+            # If the message is an acknowledgement for one of our sent messages
+            lower_msg = message_text.strip().lower()
+            if lower_msg.startswith('ack'):
+                seq = lower_msg[3:]
+                # Extract digits from seq
+                seq_digits = ''
+                for ch in seq:
+                    if ch.isdigit():
+                        seq_digits += ch
+                        if len(seq_digits) >= 5:
+                            break
+                    else:
+                        break
+                if seq_digits:
+                    removed = self.pending_acks.pop((src.upper(), seq_digits), None)
+                    if removed:
+                        self.logger.info("Received ack% s from %s for message '%s'", seq_digits, src, removed)
+                    else:
+                        self.logger.debug("Received ack% s from %s but no pending entry", seq_digits, src)
+                return
+            elif lower_msg.startswith('rej'):
+                seq = lower_msg[3:]
+                # Extract digits for rejection
+                seq_digits = ''
+                for ch in seq:
+                    if ch.isdigit():
+                        seq_digits += ch
+                        if len(seq_digits) >= 5:
+                            break
+                    else:
+                        break
+                if seq_digits:
+                    removed = self.pending_acks.pop((src.upper(), seq_digits), None)
+                    if removed:
+                        self.logger.warning("Received rejection rej% s from %s for message '%s'", seq_digits, src, removed)
+                    else:
+                        self.logger.debug("Received rej% s from %s but no pending entry", seq_digits, src)
                 return
             self.logger.info("Message from %s: %s", src, message_text)
+            # Process the command (if any)
             self._process_command(src.upper(), message_text.strip())
+            # If there was a sequence number in the incoming message, send an ack
+            if seq_num:
+                # Acknowledge back to sender with ackNN format
+                self._send_message(src, f"ack{seq_num}")
         except Exception as exc:
             self.logger.error("Packet parse error: %s", exc)
 
@@ -361,7 +432,12 @@ class APRSBBS:
         inbox = self.mailboxes.get(callsign, [])
         if inbox:
             for from_call, message in inbox:
-                self._send_message(callsign, f"From {from_call}: {message}")
+                # Deliver each stored message with ack request
+                self._send_message(
+                    callsign,
+                    f"From {from_call}: {message}",
+                    expect_ack=True,
+                )
             self.mailboxes[callsign] = []  # Clear delivered messages
         else:
             self._send_message(callsign, "No new messages.")
@@ -426,13 +502,17 @@ class APRSBBS:
             return
         for member in members:
             if member != caller:
-                self._send_message(member, f"[{group_name}] {caller}: {message}")
+                self._send_message(
+                    member,
+                    f"[{group_name}] {caller}: {message}",
+                    expect_ack=True,
+                )
         self._send_message(caller, f"Sent to group '{group_name}'.")
 
     # ------------------------------------------------------------------
     # Sending
     # ------------------------------------------------------------------
-    def _send_message(self, to_call: str, message: str) -> None:
+    def _send_message(self, to_call: str, message: str, *, expect_ack: bool = False) -> None:
         """Format and transmit an APRS text message via APRS‑IS.
 
         According to the APRS message format, the payload begins with a
@@ -446,7 +526,26 @@ class APRSBBS:
         """
         if not self._sock_file:
             return
-        # Build the message payload
+        # If acknowledgement is requested, append a sequence number to the
+        # message in the form "{NN" where NN is a two-digit sequence.  Store
+        # the message in pending_acks for later correlation when an ack is
+        # received.  Sequence numbers wrap around from 99 back to 00.
+        orig_message = message
+        if expect_ack:
+            seq_num = self.next_seq.get(to_call, 1)
+            seq_str = f"{seq_num:02d}"
+            # Prepare next sequence number for this recipient
+            self.next_seq[to_call] = (seq_num % 99) + 1
+            message = f"{message}{{{seq_str}"
+            # Record the pending ack with callsign and sequence
+            self.pending_acks[(to_call.upper(), seq_str)] = orig_message
+            self.logger.debug(
+                "Queued message for ack: %s -> %s (seq %s)",
+                to_call,
+                orig_message,
+                seq_str,
+            )
+        # Build the message payload (addressee padded to 9 chars)
         addressee = to_call.upper().ljust(9)[:9]
         payload = f":{addressee}:{message}"
         # Compose the full TNC2 packet
@@ -467,7 +566,7 @@ class APRSBBS:
                     lon: str,
                     comment: str,
                     symbol_table: str = "/",
-                    symbol_code: str = "B",
+                    symbol_code: str = "-",
                     ) -> None:
         """Transmit an APRS object packet announcing this BBS on the map.
 
