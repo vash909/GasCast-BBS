@@ -512,7 +512,7 @@ class APRSBBS:
     # ------------------------------------------------------------------
     # Sending
     # ------------------------------------------------------------------
-    def _send_message(self, to_call: str, message: str, *, expect_ack: bool = False) -> None:
+    def _send_message(self, to_call: str, message: str, *, expect_ack: bool = True) -> None:
         """Format and transmit an APRS text message via APRS‑IS.
 
         According to the APRS message format, the payload begins with a
