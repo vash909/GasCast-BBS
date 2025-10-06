@@ -63,7 +63,7 @@ import logging
 import socket
 import threading
 import time
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple, Set, Union
 
 
 def generate_passcode(callsign: str) -> int:
@@ -114,8 +114,8 @@ class APRSBBS:
         port: int = 14580,
         software_name: str = "PYBBS",
         software_version: str = "0.1",
-        filter_string: str | None = None,
-        passcode: int | None = None,
+        filter_string: Union[str, None] = None,
+        passcode:  Union[str, None] = None,
     ) -> None:
         """Initialise the BBS with connection parameters.
 
