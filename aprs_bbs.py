@@ -441,8 +441,8 @@ class APRSBBS:
             self.mailboxes[callsign] = []  # Clear delivered messages
         else:
             self._send_message(callsign, "No new messages.")
-        # Send help hint
-        self._send_message(callsign, "Send 'help' for a list of commands.")
+        # Send help hint - not needed actually
+        #self._send_message(callsign, "Send 'help' for a list of commands.")
 
     def _handle_help(self, callsign: str) -> None:
         """Send a brief help listing to the caller."""
