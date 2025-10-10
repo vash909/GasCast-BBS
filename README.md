@@ -1,4 +1,4 @@
-# GasCast-BBS (Script-Only)
+# GasCast-BBS
 
 A **simple APRS Bulletin Board System (BBS)** implemented with **only Python’s standard library**.  
 It connects to **APRS‑IS** over TCP, logs in with your callsign, listens for APRS message frames addressed to the BBS callsign, and executes **simple text commands**. It also keeps **mailboxes** for delayed delivery of private messages and supports **chat groups**. Messages are **persisted to SQLite** so queued mail survives restarts.
@@ -10,8 +10,7 @@ It connects to **APRS‑IS** over TCP, logs in with your callsign, listens for A
 ## ✨ Features
 
 - **APRS‑IS connectivity** via TCP (defaults to `rotate.aprs2.net:14580`) with a standards‑compliant login line.
-- **Automatic passcode generation** from your base callsign (or use `--passcode` / `APRS_PASSCODE`).
-- **APRS message parsing** (TNC2 format): processes only text messages addressed to your BBS callsign.
+- **APRS message parsing** (APRS 1.2c format): processes only text messages addressed to your BBS callsign.
 - **Private mailboxes** with automatic delivery upon `login`.
 - **Chat groups**: create/join/leave groups and broadcast within them.
 - **Acknowledgement tracking**: outgoing messages can request ACKs using APRS `{NN` sequence numbers (00–99 wrap).
@@ -23,8 +22,8 @@ It connects to **APRS‑IS** over TCP, logs in with your callsign, listens for A
 
 ## 🧰 Requirements
 
-- **Python 3.10+** (standard library only: `socket`, `threading`, `argparse`, `sqlite3`, `logging`, `time`, `os`).
-- A valid **amateur radio callsign** (base callsign, without SSID, e.g. `N0CALL`).
+- **Python 3.7+** (standard library only: `socket`, `threading`, `argparse`, `sqlite3`, `logging`, `time`, `os`).
+- A valid **amateur radio license and callsign** (base callsign, e.g. `N0CALL`).
 
 No external pip packages are required.
 
@@ -44,7 +43,7 @@ You can configure connection and behavior via CLI flags and/or environment varia
 Run `python3 aprs_bbs.py --help` to see all flags. Summary:
 
 - **Positional**
-  - `callsign` – your base callsign (e.g. `N0CALL`). *Do not include SSID.*
+  - `callsign` – your base callsign and SSID (e.g. `N0CALL`).
 - **Connection**
   - `--server` – APRS‑IS host (default: `rotate.aprs2.net`)
   - `--port` – APRS‑IS TCP port (default: `14580` – user filter port)
@@ -64,27 +63,27 @@ Run `python3 aprs_bbs.py --help` to see all flags. Summary:
 
 ## 🚀 Quick start
 
-1. Ensure you have Python 3.10+.
-2. Pick your base callsign (e.g., `N0CALL`).  
-   - Optionally set `APRS_PASSCODE` or pass `--passcode`. If neither is provided, the script **computes** the standard APRS‑IS passcode from your base callsign.
-3. Run:
+1. Ensure you have Python 3 installed;
+2. Set your parameter as explained above;  
+3. Run (if you have environment variables already setup):
    ```bash
-   python3 aprs_bbs.py N0CALL -v
+   python3 aprs_bbs.py N0CALL 
    ```
    Or with custom server/port:
    ```bash
-   python3 aprs_bbs.py N0CALL --server rotate.aprs2.net --port 14580
+   python3 aprs_bbs.py N0CALL-SSID --server rotate.aprs2.net --port 14580 --passcode $pwd --object-name $name --lat DDMM.mmN/S --lon DDDMM.mmE/W --comment $comment --object-interval $seconds --symbol-table / --symbol-code -
    ```
 
-> The script connects to APRS‑IS, sends the login line, and starts a background receiver thread. Press `Ctrl+C` to stop.
+> The script connects to APRS‑IS, sends the login line, and starts a background receiver thread.
 
 ---
 
 ## 📨 Using the BBS
+An example of a running instance is available at [GasCast BBS](https://aprs.fi/info/a/GasCast): send `login` to IU1BOT-10 to get started!
 
-All interactions are APRS **text messages** addressed to **your BBS callsign**. The script recognizes these commands:
+All interactions are APRS **text messages** addressed to **your ham radio callsign** (not the object name!). The script recognizes these commands:
 
-- `login` – Register with the BBS and receive any **pending private mail**.
+- `login` – Register with the BBS and receive any **pending private messages**.
 - `help` – Show a short help message.
 - `msg CALLSIGN MESSAGE` – Store a **private message** for `CALLSIGN`.
 - `group create NAME` – Create a chat group `NAME` and join it.
@@ -140,48 +139,36 @@ python3 aprs_bbs.py N0CALL \
 
 ---
 
-## 🔐 Notes & good practice
-
-- Use the **base callsign** (no SSID) for passcode generation.
-- A **negative passcode** indicates receive‑only on APRS‑IS; servers will ignore outbound messages.
-- Keep your passcode out of source control; prefer **environment variables**.
-- Run behind a stable internet connection; the script uses the `TCPIP*` path as an internet client.
-- Use `--filter` to narrow APRS‑IS traffic (defaults to messages to your callsign).
-
----
-
 ## 🛠️ Logging
 
 Enable verbose logs for troubleshooting:
 ```bash
-python3 aprs_bbs.py N0CALL --verbose
+python3 aprs_bbs.py N0CALL -v
 ```
 Log format: `TIMESTAMP LEVEL LOGGER: message`.
+
+Open an issue and attach logs if any unexpected behavior is noticed.
 
 ---
 
 ## 🚧 Limitations
 
 - RF (TNC/KISS) is **not** handled directly—this script speaks **APRS‑IS only**.
-- Mailboxes and groups are **in‑memory** for the current session; private messages are persisted, group membership is not persisted across restarts.
-- APRS message body length is constrained by the APRS spec and gateways.
-
----
-
-## 🧪 Development tips
-
-- Test locally against `rotate.aprs2.net:14580` with a filter limiting traffic to your callsign.
-- Add application‑level filters or rate limits if connecting from a noisy feed.
-- Consider extending the command set (e.g., listing inbox, deleting messages, listing groups).
+- While private messages are persisted, group membership is saved in volatile memroy and not persisted across restarts.
+- APRS message body length is constrained by the APRS protocol specs and gateways.
+- We accept requests and suggestions for new features. Don't be shy!! 
 
 ---
 
 ## 📄 License
 
-This script is intended for use within the GasCast‑BBS repository. License terms should match the repo’s license (e.g., GPL‑3.0). Update this section if needed.
+- Distributed under **GPL-3.0** license. See the `LICENSE` file for details.
 
 ---
 
 ## 🙌 Credits
 
-Authored by **@vash**. Cheers and 73!
+- Author: Lorenzo Vash IU1BOT - iu1bot@xzgroup.net | Matteo IU6HMO ham@iu6hmo.com
+- Contributors: Maurizio IK1WHN
+
+**Any comment is welcome, feel free to drop an email for whatever reason!**
