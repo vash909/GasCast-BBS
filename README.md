@@ -1,111 +1,111 @@
 # GasCast-BBS
 
-Un **BBS APRS in Python** con supporto **APRS-IS**, pensato per offrire una semplice cassetta postale (Bulletin Board System) per radioamatori su rete APRS e backbone internet.
+A **Python APRS BBS** with **APRS-IS support**, designed to provide a simple Bulletin Board System (BBS) for radio amateurs over the APRS network and the internet backbone.
 
-> **Stato del progetto:** prototipo attivo / in evoluzione. Feedback e PR sono benvenuti!
-
----
-
-## ✨ Caratteristiche
-
-- Ricezione e pubblicazione di messaggi APRS tramite **APRS-IS**.
-- Bacheca messaggi (BBS) locale con **persistenza su database**.
-- Architettura minimale in **Python**, facile da leggere ed estendere.
-- Licenza **GPL-3.0** (software libero).
-
-> Nota: la funzionalità RF diretta (TNC/RTX) non è attualmente prevista in questo repository; l’accesso avviene via backbone APRS-IS.
+> **Project status:** active prototype / under development. Feedback and PRs are welcome!
 
 ---
 
-## 🧭 Struttura del repository
+## ✨ Features
 
-- `aprs_bbs.py` – entrypoint dell’applicazione BBS e logica APRS-IS.
-- `aprs_bbs_db.py` – accesso ai dati e funzioni di persistenza (es. SQLite).
-- `aprs_bbs_old.py` – versione precedente / codice storico.
-- `LICENSE` – termini della licenza (GPL-3.0).
+- Receive and publish APRS messages via **APRS-IS**.
+- Local message board (BBS) with **database persistence**.
+- Minimal architecture in **Python**, easy to read and extend.
+- **GPL-3.0 License** (free software).
 
-> I nomi dei file sono indicativi della responsabilità del modulo; controlla il sorgente per i dettagli implementativi.
+> Note: direct RF functionality (TNC/RTX) is not currently implemented in this repository; access is via the APRS-IS backbone.
 
 ---
 
-## 🚀 Requisiti
+## 🧭 Repository Structure
 
-- **Python** 3.10+ (consigliato 3.11 o superiore)
-- Moduli Python:
-  - `aprslib` (per interfacciarsi con APRS-IS)
-  - eventuali moduli standard (`sqlite3`, `logging`, ecc.)
+- `aprs_bbs.py` – main entrypoint and APRS-IS logic.
+- `aprs_bbs_db.py` – data access and persistence functions (e.g., SQLite).
+- `aprs_bbs_old.py` – previous version / legacy code.
+- `LICENSE` – license terms (GPL-3.0).
 
-Installa le dipendenze con:
+> File names are indicative of module responsibilities; check the source for implementation details.
+
+---
+
+## 🚀 Requirements
+
+- **Python** 3.10+ (3.11 or higher recommended)
+- Python modules:
+  - `aprslib` (for interfacing with APRS-IS)
+  - standard modules (`sqlite3`, `logging`, etc.)
+
+Install dependencies with:
 
 ```bash
 pip install -U aprslib
 ```
 
-> Se il progetto introduce un `requirements.txt` o `pyproject.toml`, preferisci quelli.
+> If the project introduces a `requirements.txt` or `pyproject.toml`, prefer using those.
 
 ---
 
-## 🔧 Configurazione
+## 🔧 Configuration
 
-Configura le credenziali e i parametri di connessione APRS-IS (callsign, passcode, server) tramite **variabili d’ambiente** o un file `.env` (se usi `python-dotenv`). Esempio con variabili d’ambiente:
+Set up your APRS-IS credentials and connection parameters (callsign, passcode, server) using **environment variables** or a `.env` file (if you use `python-dotenv`). Example with environment variables:
 
 ```bash
-export APRS_CALLSIGN="N0CALL-10"   # il tuo nominativo-SSID
-export APRS_PASSCODE="12345"       # passcode APRS-IS per il tuo nominativo
+export APRS_CALLSIGN="N0CALL-10"   # your callsign-SSID
+export APRS_PASSCODE="12345"       # APRS-IS passcode for your callsign
 export APRS_SERVER="rotate.aprs2.net"
 export APRS_PORT="14580"
 ```
 
-> Suggerimento: `rotate.aprs2.net:14580` fornisce un bilanciatore per i server APRS-IS. Imposta filtri server (es. area/portatori) secondo le tue esigenze.
+> Tip: `rotate.aprs2.net:14580` provides a load-balanced APRS-IS entrypoint. Adjust server filters (e.g., area/portions) as needed.
 
 ---
 
-## ▶️ Avvio
+## ▶️ Run
 
-Con la configurazione pronta:
+With configuration ready:
 
 ```bash
 python aprs_bbs.py
 ```
 
-> Alcuni ambienti richiedono `python3` invece di `python`.
+> Some systems may require `python3` instead of `python`.
 
-Per usare un file `.env`:
+To use a `.env` file:
 
 ```bash
 python -m pip install python-dotenv
-cp .env.example .env   # se presente nel repo
-# poi avvia normalmente
+cp .env.example .env   # if provided in the repo
+# then run normally
 python aprs_bbs.py
 ```
 
 ---
 
-## 📨 Utilizzo (idee d’interazione)
+## 📨 Usage (interaction ideas)
 
-- Inserisci/ricevi **messaggi BBS** (bulletins / private messages) via APRS-IS.
-- Definisci **comandi semplici** (es. HELP, LIST, READ, SEND) gestiti dal BBS.
-- Regola i **filtri APRS-IS** (ad es. area/radius) per ridurre il traffico in ingresso.
-- Personalizza il **prefisso** o il **formato** dei messaggi BBS per distinguerli nel feed APRS.
+- Insert/receive **BBS messages** (bulletins / private messages) via APRS-IS.
+- Define **simple commands** (e.g., HELP, LIST, READ, SEND) handled by the BBS.
+- Adjust **APRS-IS filters** (e.g., area/radius) to reduce incoming traffic.
+- Customize **prefix/format** of BBS messages to distinguish them in the APRS feed.
 
-> Verifica nel codice i comandi già implementati e il formato delle UI string (APRS).
-
----
-
-## 💾 Persistenza dati
-
-Il modulo `aprs_bbs_db.py` fornisce funzioni per persistere i messaggi (tipicamente **SQLite** in locale). Il file del DB può essere versionato/ignorato a seconda della tua policy. Per rigenerarlo, elimina il file e riavvia l’applicazione (se lo schema è creato a runtime).
+> Check the code for currently implemented commands and APRS UI string formats.
 
 ---
 
-## 🧪 Sviluppo
+## 💾 Data Persistence
 
-Clona il repo ed esegui l’app in locale con un server APRS-IS di test/rotazione. Consigli:
-- attiva **logging** a livello `INFO/DEBUG` per ispezionare il traffico;
-- proteggi il passcode tramite variabili d’ambiente o un **.env** escluso da git;
-- aggiungi test su funzioni di parsing/serializzazione frame APRS.
+The `aprs_bbs_db.py` module provides functions to persist messages (typically **SQLite** locally). The DB file may be versioned/ignored depending on your policy. To regenerate it, delete the file and restart the application (if schema is auto-created).
 
-Esempio di esecuzione con logging verboso:
+---
+
+## 🧪 Development
+
+Clone the repo and run locally against a test/rotating APRS-IS server. Recommendations:
+- enable **logging** at `INFO/DEBUG` to inspect traffic;
+- protect the passcode via environment variables or a **.env** excluded from git;
+- add tests for APRS frame parsing/serialization functions.
+
+Example run with verbose logging:
 
 ```bash
 export LOG_LEVEL=DEBUG
@@ -114,42 +114,42 @@ python aprs_bbs.py
 
 ---
 
-## 🛣️ Roadmap (proposte)
+## 🛣️ Roadmap (proposals)
 
-- [ ] Comandi BBS documentati e help integrato
-- [ ] Gestione **messaggi privati** con ACL basilari
-- [ ] Filtri APRS-IS configurabili da CLI o file YAML
-- [ ] Esportazione/backup messaggi (JSON/CSV)
-- [ ] Contenitore **Docker** (immagine leggera + healthcheck)
-- [ ] Integrazione RF (TNC KISS) opzionale
+- [ ] Documented BBS commands and integrated help
+- [ ] **Private messages** support with basic ACL
+- [ ] Configurable APRS-IS filters (CLI/YAML)
+- [ ] Message export/backup (JSON/CSV)
+- [ ] **Docker container** (lightweight image + healthcheck)
+- [ ] Optional RF integration (TNC KISS)
 
-Contribuzioni e idee sono benvenute!
+Contributions and ideas are welcome!
 
 ---
 
-## 🤝 Contribuire
+## 🤝 Contributing
 
-1. Forka il progetto e crea un branch feature:
+1. Fork the project and create a feature branch:
    ```bash
-   git checkout -b feature/nome-feature
+   git checkout -b feature/your-feature
    ```
-2. Fai commit chiari, aggiungi test se possibile.
-3. Apri una **Pull Request** descrivendo obiettivi e cambi.
+2. Write clear commits, add tests if possible.
+3. Open a **Pull Request** describing goals and changes.
 
-Per bug e richieste, usa le **Issues**.
-
----
-
-## 📝 Licenza
-
-Distribuito con licenza **GPL-3.0**. Vedi il file `LICENSE` per i dettagli.
+For bugs and requests, use **Issues**.
 
 ---
 
-## 📬 Contatti
+## 📝 License
 
-- Autore: @vash
+Distributed under **GPL-3.0** license. See the `LICENSE` file for details.
+
+---
+
+## 📬 Contact
+
+- Author: @vash
 - Repo: https://github.com/vash909/GasCast-BBS
 
-Se usi GasCast-BBS on‑air, fammi sapere come va e cosa vorresti migliorare. 73!
+If you use GasCast-BBS on‑air, let me know how it works and what you’d like improved. 73!
 
