@@ -148,7 +148,8 @@ Distributed under **GPL-3.0** license. See the `LICENSE` file for details.
 
 ## 📬 Contact
 
-- Author: @vash
+- Author: Lorenzo Vash IU1BOT - iu1bot@xzgroup.net | Matteo IU6HMO ham@iu6hmo.com
+- Contributors: Maurizio IK1WHN
 - Repo: https://github.com/vash909/GasCast-BBS
 
 If you use GasCast-BBS on‑air, let me know how it works and what you’d like improved. 73!
