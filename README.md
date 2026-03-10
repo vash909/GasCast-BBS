@@ -1,4 +1,5 @@
-<img width="604" height="205" alt="image" src="https://github.com/user-attachments/assets/54ab9da5-19ae-4e49-9b14-c94a3d49aedb" />
+<img width="609" height="189" alt="image" src="https://github.com/user-attachments/assets/62104387-72e1-4c83-96fa-15a66883aa37" />
+
 
 # GasCast Linux Telnet BBS
 
