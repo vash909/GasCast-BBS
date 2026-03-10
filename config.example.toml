@@ -1,0 +1,21 @@
+[server]
+host = "0.0.0.0"
+port = 2323
+data_dir = "./data"
+
+[aprs]
+enabled = false
+callsign = "N0CALL-10"
+server = "rotate.aprs2.net"
+port = 14580
+filter = "filter m/N0CALL-10"
+passcode = 12345
+object_name = "GasCast"
+# APRS format shown below. Decimal is also accepted (e.g. 44.3107N / 9.3320E).
+object_lat = "4540.00N"
+object_lon = "00911.00E"
+object_comment = "-GasCast BBS Bridge"
+position_interval = 900
+object_interval = 900
+object_symbol_table = "/"
+object_symbol_code = "-"
